@@ -15,7 +15,6 @@ class Karyawan extends Model
     protected $keyType = 'string';
 
     protected $fillable = [
-        'idkarwayan',
         'nama',
         'alamat',
         'email',
@@ -30,5 +29,10 @@ class Karyawan extends Model
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id', 'id');
+    }
+
+    public function transaksi()
+    {
+        return $this->hasMany(Transaksi::class, 'id_karyawan', 'idkaryawan');
     }
 }

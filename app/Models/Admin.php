@@ -14,7 +14,6 @@ class Admin extends Model
     protected $keyType = 'string';
 
     protected $fillable = [
-        'idadmin',
         'nama',
         'alamat',
         'email',
