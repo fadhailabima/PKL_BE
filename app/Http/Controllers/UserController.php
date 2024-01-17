@@ -20,43 +20,37 @@ class UserController extends Controller
             'password' => 'required|string|min:6',
             'level' => 'required|in:admin,karyawan', // Validasi level
             'nama' => 'required|string', // Validasi nama
-            'status' => 'required|in:Aktif,NON AKTIF', // Validasi status
-            // Sesuaikan validasi sesuai kebutuhan Anda
         ]);
 
-        // Jika validasi gagal, kirimkan respons JSON dengan pesan error
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
-
-        // Buat user baru
+        
         $user = User::create([
             'username' => $request->username,
             'password' => Hash::make($request->password),
-            'level' => $request->level, // Tambahkan level ke user
-            // Tambahkan data lain sesuai kebutuhan
+            'level' => $request->level,
         ]);
 
         // Jika level adalah admin
         if ($request->level === 'admin') {
             $admin = new Admin();
-            $admin->idadmin = $user->username; // Menggunakan username sebagai idadmin
-            $admin->nama = $request->nama; // Tambahkan nama ke entitas Admin
-            $admin->status = $request->status; // Tambahkan status ke entitas Admin
-            $admin->user_id = $user->id; // Menghubungkan dengan user yang baru dibuat
-            // Tambahkan data admin lainnya sesuai kebutuhan
+            $admin->idadmin = $user->username;
+            $admin->nama = $request->nama;
+            $admin->status = 'Aktif';
+            $admin->user_id = $user->id;
             $admin->save();
         } else if ($request->level === 'karyawan') {
             $karyawan = new Karyawan();
-            $karyawan->idkaryawan = $user->username; // Menggunakan username sebagai idkaryawan
-            $karyawan->nama = $request->nama; // Tambahkan nama ke entitas Karyawan
-            $karyawan->status = $request->status; // Tambahkan status ke entitas Karyawan
-            $karyawan->user_id = $user->id; // Menghubungkan dengan user yang baru dibuat
-            // Tambahkan data karyawan lainnya sesuai kebutuhan
+            $karyawan->idkaryawan = $user->username;
+            $karyawan->nama = $request->nama;
+            $karyawan->status = 'Aktif';
+            $karyawan->user_id = $user->id;
             $karyawan->save();
         }
 
-        // Kirim respons JSON untuk berhasil signup
+        // dd($request->all());
+
         return response()->json(['message' => 'Signup successful', 'user' => $user], 201);
     }
 
