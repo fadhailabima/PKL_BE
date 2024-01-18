@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class UserController extends Controller
 {
@@ -25,7 +26,7 @@ class UserController extends Controller
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
-        
+
         $user = User::create([
             'username' => $request->username,
             'password' => Hash::make($request->password),
@@ -103,4 +104,64 @@ class UserController extends Controller
             return response()->json(['error' => 'Unauthorized'], 401);
         }
     }
+
+    public function updateProfile(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'alamat' => 'nullable|string',
+                'email' => 'nullable|max:255|email',
+                'handphone' => 'nullable|string|regex:/^[0-9]+$/|between:10,12',
+                'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:3048',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json(['success' => false, 'message' => $validator->errors()], 422);
+            }
+
+            $user = Auth::user();
+
+            // Check user's role based on the 'level' column
+            if ($user->level == 'admin') {
+                // User is an admin, handle accordingly
+                $model = Admin::where('user_id', $user->id)->firstOrFail();
+            } elseif ($user->level == 'karyawan') {
+                // User is a karyawan, handle accordingly
+                $model = Karyawan::where('user_id', $user->id)->firstOrFail();
+            } else {
+                // Handle other user types if necessary
+                return response()->json(['success' => false, 'message' => 'Invalid user type'], 422);
+            }
+
+            // Update profile fields
+            $model->update([
+                'alamat' => $request->input('alamat', $model->alamat),
+                'email' => $request->input('email', $model->email),
+                'handphone' => $request->input('handphone', $model->handphone),
+            ]);
+
+            // Handle photo update
+            if ($request->hasFile('foto') && $request->file('foto')->isValid()) {
+                // Delete old photo if exists
+                if ($model->foto) {
+                    Storage::delete('public/photo/' . $model->foto);
+                }
+
+                // Save new photo
+                $file = $request->file('foto');
+                $fileName = uniqid() . '.' . $file->getClientOriginalExtension();
+                $file->storeAs('public/photo/', $fileName);
+                $model->foto = $fileName;
+                $model->save();
+            }
+
+            return response()->json(['success' => true, 'message' => 'Data berhasil diperbarui'], 200);
+        } catch (\Exception $e) {
+            \Log::error('Error updating profile: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+
+
 }

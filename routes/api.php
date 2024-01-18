@@ -36,4 +36,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/getRakbyID/{idrak}', [RakController::class, 'getRakbyID']);
     Route::get('/getRakSlot', [RakController::class, 'getRakSlot']);
     Route::get('/rak/{idrak}/rakslots', [RakController::class, 'getByRakId']);
+    Route::put('/updateProfile', [UserController::class, 'updateProfile']);
 });
