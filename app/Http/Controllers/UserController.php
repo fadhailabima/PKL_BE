@@ -119,49 +119,51 @@ class UserController extends Controller
                 return response()->json(['success' => false, 'message' => $validator->errors()], 422);
             }
 
-            $user = Auth::user();
+            $user_id = Auth::id();
 
-            // Check user's role based on the 'level' column
-            if ($user->level == 'admin') {
-                // User is an admin, handle accordingly
-                $model = Admin::where('user_id', $user->id)->firstOrFail();
-            } elseif ($user->level == 'karyawan') {
-                // User is a karyawan, handle accordingly
-                $model = Karyawan::where('user_id', $user->id)->firstOrFail();
-            } else {
-                // Handle other user types if necessary
-                return response()->json(['success' => false, 'message' => 'Invalid user type'], 422);
-            }
+            // Mencari data admin berdasarkan user_id
+            $admin = Admin::where('user_id', $user_id)->firstOrFail();
+
+            // Log admin data before the update
+            // \Log::info('Before Update: ' . json_encode($admin->toArray()));
 
             // Update profile fields
-            $model->update([
-                'alamat' => $request->input('alamat', $model->alamat),
-                'email' => $request->input('email', $model->email),
-                'handphone' => $request->input('handphone', $model->handphone),
+            $admin->fill([
+                'alamat' => $request->input('alamat', $admin->alamat),
+                'email' => $request->input('email', $admin->email),
+                'handphone' => $request->input('handphone', $admin->handphone),
             ]);
 
             // Handle photo update
             if ($request->hasFile('foto') && $request->file('foto')->isValid()) {
                 // Delete old photo if exists
-                if ($model->foto) {
-                    Storage::delete('public/photo/' . $model->foto);
+                if ($admin->foto) {
+                    Storage::delete('public/photo/' . $admin->foto);
                 }
 
                 // Save new photo
                 $file = $request->file('foto');
                 $fileName = uniqid() . '.' . $file->getClientOriginalExtension();
                 $file->storeAs('public/photo/', $fileName);
-                $model->foto = $fileName;
-                $model->save();
+                $admin->foto = $fileName;
             }
 
-            return response()->json(['success' => true, 'message' => 'Data berhasil diperbarui'], 200);
+            // Log admin data before saving
+            // \Log::info('Before Save: ' . json_encode($admin->toArray()));
+
+            $admin->save();
+
+            // Log admin data after saving
+            // \Log::info('After Save: ' . json_encode($admin->toArray()));
+
+            return response()->json(['success' => true, 'message' => 'Data berhasil diperbarui']);
         } catch (\Exception $e) {
-            \Log::error('Error updating profile: ' . $e->getMessage());
+            // \Log::error('Error updating admin profile: ' . $e->getMessage());
+
+            // Log error message
+            // \Log::error('Error: ' . $e->getMessage());
+
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
-
-
-
 }
