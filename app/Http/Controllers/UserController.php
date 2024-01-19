@@ -86,6 +86,9 @@ class UserController extends Controller
         $token = $user->createToken('authToken')->plainTextToken;
         $userData = array_merge($user->toArray(), ['token' => $token]);
 
+        // encrypt the level to be used in the frontend with hash key
+        // setup the hash key        
+
         // Jika login gagal, kirimkan respons JSON dengan pesan error
         return $this->okResponse("Login Berhasil", ['user' => $userData]);
     }
@@ -124,15 +127,22 @@ class UserController extends Controller
             // Mencari data admin berdasarkan user_id
             $admin = Admin::where('user_id', $user_id)->firstOrFail();
 
-            // Log admin data before the update
-            // \Log::info('Before Update: ' . json_encode($admin->toArray()));
-
             // Update profile fields
-            $admin->fill([
-                'alamat' => $request->input('alamat', $admin->alamat),
-                'email' => $request->input('email', $admin->email),
-                'handphone' => $request->input('handphone', $admin->handphone),
-            ]);
+            $dataToUpdate = [];
+
+            if ($request->input('alamat')) {
+                $dataToUpdate['alamat'] = $request->input('alamat');
+            }
+
+            if ($request->input('email')) {
+                $dataToUpdate['email'] = $request->input('email');
+            }
+
+            if ($request->input('handphone')) {
+                $dataToUpdate['handphone'] = $request->input('handphone');
+            }
+
+            $admin->update($dataToUpdate);
 
             // Handle photo update
             if ($request->hasFile('foto') && $request->file('foto')->isValid()) {
@@ -148,20 +158,10 @@ class UserController extends Controller
                 $admin->foto = $fileName;
             }
 
-            // Log admin data before saving
-            // \Log::info('Before Save: ' . json_encode($admin->toArray()));
-
             $admin->save();
 
-            // Log admin data after saving
-            // \Log::info('After Save: ' . json_encode($admin->toArray()));
-
-            return response()->json(['success' => true, 'message' => 'Data berhasil diperbarui']);
+            return response()->json(['success' => true, 'message' => 'Data berhasil diperbarui', 'admin' => $admin, 'inputs' => $request->all()]);
         } catch (\Exception $e) {
-            // \Log::error('Error updating admin profile: ' . $e->getMessage());
-
-            // Log error message
-            // \Log::error('Error: ' . $e->getMessage());
 
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }

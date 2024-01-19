@@ -3,7 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Admin;
-use Illuminate\Http\Request;
+use App\Models\Produk;
+use App\Models\Rak;
+use App\Models\Transaksi;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 
 class AdminController extends Controller
@@ -16,6 +19,9 @@ class AdminController extends Controller
         // Mencari data admin berdasarkan user_id
         $admin = Admin::where('user_id', $user_id)->first();
 
+        // get image_url
+        $admin->image_url = $admin->foto ? url('api/public/storage/photo/' . $admin->foto) : null;
+
         // Pastikan admin ditemukan
         if (!$admin) {
             return response()->json(['error' => 'Admin tidak ditemukan.'], 404);
@@ -23,5 +29,30 @@ class AdminController extends Controller
 
         // Memberikan respons JSON dengan data admin
         return response()->json(['admin' => $admin]);
+    }
+
+    public function getStatistik()
+    {
+        $jumlahRak = Rak::count();
+        $jumlahProduk = Produk::count();
+        $jumlahUser = User::count();
+        $jumlahTransaksi = Transaksi::count();
+
+        return response()->json([
+            'jumlah_rak' => $jumlahRak,
+            'jumlah_produk' => $jumlahProduk,
+            'jumlah_user' => $jumlahUser,
+            'jumlah_transaksi' => $jumlahTransaksi,
+        ]);
+    }
+
+    public function manageUser()
+    {
+        // Mengambil data user beserta informasi terkait dari tabel Admin dan Karyawan
+        $users = User::with('admin', 'karyawan')
+            ->orderBy('level', 'asc') // Sesuaikan dengan nama kolom yang menunjukkan level (admin/karyawan)
+            ->get();
+
+        return response()->json(['users' => $users]);
     }
 }

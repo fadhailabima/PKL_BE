@@ -7,6 +7,7 @@ use App\Http\Controllers\TransaksiController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
+use Nette\Utils\Image;
 
 /*
 |--------------------------------------------------------------------------
@@ -30,11 +31,30 @@ Route::middleware('auth:sanctum')->group(function () {
     });
     Route::post('/logout', [UserController::class, 'logout']);
     Route::post('/tambahtransaksi', [CreateController::class, 'tambahTransaksi']);
+    // admin page
     Route::get('/getadmin', [AdminController::class, 'getAdmin']);
+    Route::get('/getStatistik', [AdminController::class, 'getStatistik']);
+    Route::get('/manageUser', [AdminController::class, 'manageUser']);
     Route::get('/getrak', [RakController::class, 'getAllRaks']);
     Route::get('/getTransaksi', [TransaksiController::class, 'getAllTransaksi']);
     Route::get('/getRakbyID/{idrak}', [RakController::class, 'getRakbyID']);
     Route::get('/getRakSlot', [RakController::class, 'getRakSlot']);
     Route::get('/rak/{idrak}/rakslots', [RakController::class, 'getByRakId']);
-    Route::put('/updateProfile', [UserController::class, 'updateProfile']);
+    Route::post('/updateProfile', [UserController::class, 'updateProfile']);
+});
+
+Route::get('/public/storage/photo/{filename}', function ($filename) {
+    $path = public_path() . '/storage/photo/' . $filename;
+
+    if (!File::exists($path)) {
+        return response()->json(['message' => 'Image not found.'], 404);
+    }
+
+    $file = File::get($path);
+    $type = File::mimeType($path);
+
+    $response = Response::make($file, 200);
+    $response->header("Content-Type", $type);
+
+    return $response;
 });
