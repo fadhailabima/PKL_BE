@@ -49,139 +49,90 @@ class CreateController extends Controller
         // Berikan response JSON
         return response()->json(['message' => 'Produk berhasil ditambahkan', 'data' => $products], 201);
     }
-    public function tambahRak(Request $request)
-    {
-        // Validasi request menggunakan Laravel Validator
-        $validator = Validator::make($request->all(), [
-            'kapasitas' => 'required|numeric',
-            'status' => 'nullable|in:tersedia,tidak tersedia',
-        ]);
+    // public function tambahRak(Request $request)
+    // {
+    //     // Validasi request menggunakan Laravel Validator
+    //     $validator = Validator::make($request->all(), [
+    //         'kapasitas' => 'required|numeric',
+    //         'status' => 'nullable|in:tersedia,tidak tersedia',
+    //     ]);
 
-        // Jika validasi gagal, kembalikan response error
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 400);
-        }
+    //     // Jika validasi gagal, kembalikan response error
+    //     if ($validator->fails()) {
+    //         return response()->json(['errors' => $validator->errors()], 400);
+    //     }
 
-        // Dapatkan ID rak terbaru
-        $latestRak = Rak::orderBy('idrak', 'desc')->first();
+    //     // Dapatkan ID rak terbaru
+    //     $latestRak = Rak::orderBy('idrak', 'desc')->first();
 
-        // Mendapatkan angka terakhir dari ID rak terbaru
-        $lastNumber = $latestRak ? intval(substr($latestRak->idrak, 1)) : 0;
+    //     // Mendapatkan angka terakhir dari ID rak terbaru
+    //     $lastNumber = $latestRak ? intval(substr($latestRak->idrak, 1)) : 0;
 
-        // Increment angka dan format dengan nol di depan
-        $newNumber = str_pad($lastNumber + 1, 3, '0', STR_PAD_LEFT);
+    //     // Increment angka dan format dengan nol di depan
+    //     $newNumber = str_pad($lastNumber + 1, 3, '0', STR_PAD_LEFT);
 
-        // Membuat ID rak baru
-        $idRak = 'R' . $newNumber;
+    //     // Membuat ID rak baru
+    //     $idRak = 'R' . $newNumber;
 
-        // Buat objek Rak baru
-        $rak = new Rak();
-        $rak->idrak = $idRak;
-        $rak->kapasitas = $request->input('kapasitas');
-        $rak->kapasitas_sisa = $request->input('kapasitas');
-        $rak->status = $request->input('status');
-        // Simpan data ke database
-        $rak->save();
+    //     // Buat objek Rak baru
+    //     $rak = new Rak();
+    //     $rak->idrak = $idRak;
+    //     $rak->kapasitas = $request->input('kapasitas');
+    //     $rak->kapasitas_sisa = $request->input('kapasitas');
+    //     $rak->status = $request->input('status');
+    //     // Simpan data ke database
+    //     $rak->save();
 
-        // Berikan response JSON
-        return response()->json(['message' => 'Rak berhasil ditambahkan', 'data' => $rak], 201);
-    }
+    //     // Berikan response JSON
+    //     return response()->json(['message' => 'Rak berhasil ditambahkan', 'data' => $rak], 201);
+    // }
 
-    public function tambahRakslot(Request $request)
-    {
-        // Validasi request menggunakan Laravel Validator
-        $validator = Validator::make($request->all(), [
-            'id_rak' => 'required',
-            'Xcoordinate' => 'required',
-            'Ycoordinate' => 'required',
-            'Zcoordinate' => 'required',
-            'status' => 'nullable|in:tersedia,tidak tersedia',
-        ]);
+    // public function tambahRakslot(Request $request)
+    // {
+    //     // Validasi request menggunakan Laravel Validator
+    //     $validator = Validator::make($request->all(), [
+    //         'id_rak' => 'required',
+    //         'Xcoordinate' => 'required',
+    //         'Ycoordinate' => 'required',
+    //         'Zcoordinate' => 'required',
+    //         'status' => 'nullable|in:tersedia,tidak tersedia',
+    //     ]);
 
-        // Jika validasi gagal, kembalikan response error
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 400);
-        }
+    //     // Jika validasi gagal, kembalikan response error
+    //     if ($validator->fails()) {
+    //         return response()->json(['errors' => $validator->errors()], 400);
+    //     }
 
-        // Temukan rak berdasarkan id_rak dari request
-        $rak = Rak::find($request->input('id_rak'));
+    //     // Temukan rak berdasarkan id_rak dari request
+    //     $rak = Rak::find($request->input('id_rak'));
 
-        // Jika rak tidak ditemukan, kembalikan response error
-        if (!$rak) {
-            return response()->json(['errors' => ['id_rak' => 'Rak tidak ditemukan']], 404);
-        }
+    //     // Jika rak tidak ditemukan, kembalikan response error
+    //     if (!$rak) {
+    //         return response()->json(['errors' => ['id_rak' => 'Rak tidak ditemukan']], 404);
+    //     }
 
-        // Periksa apakah kapasitas maksimal rak sudah tercapai
-        $kapasitasMaksimal = $rak->kapasitas;
-        $jumlahRakslotSaatIni = $rak->RakSlot()->count();
+    //     // Periksa apakah kapasitas maksimal rak sudah tercapai
+    //     $kapasitasMaksimal = $rak->kapasitas;
+    //     $jumlahRakslotSaatIni = $rak->RakSlot()->count();
 
-        if ($jumlahRakslotSaatIni >= $kapasitasMaksimal) {
-            return response()->json(['errors' => ['kapasitas' => 'Kapasitas maksimal rak sudah tercapai']], 400);
-        }
+    //     if ($jumlahRakslotSaatIni >= $kapasitasMaksimal) {
+    //         return response()->json(['errors' => ['kapasitas' => 'Kapasitas maksimal rak sudah tercapai']], 400);
+    //     }
 
-        // Buat objek Rakslot baru dengan id_rakslot yang di-generate
-        $nextIdRakslot = $this->generateNextIdRakslot($request->input('id_rak'));
-        $rakslot = new RakSlot();
-        $rakslot->id_rakslot = $nextIdRakslot;
-        $rakslot->Xcoordinate = $request->input('Xcoordinate');
-        $rakslot->Ycoordinate = $request->input('Ycoordinate');
-        $rakslot->Zcoordinate = $request->input('Zcoordinate');
-        $rakslot->status = $request->input('status');
-        // Simpan relasi dengan rak
-        $rak->RakSlot()->save($rakslot);
+    //     // Buat objek Rakslot baru dengan id_rakslot yang di-generate
+    //     $nextIdRakslot = $this->generateNextIdRakslot($request->input('id_rak'));
+    //     $rakslot = new RakSlot();
+    //     $rakslot->id_rakslot = $nextIdRakslot;
+    //     $rakslot->Xcoordinate = $request->input('Xcoordinate');
+    //     $rakslot->Ycoordinate = $request->input('Ycoordinate');
+    //     $rakslot->Zcoordinate = $request->input('Zcoordinate');
+    //     $rakslot->status = $request->input('status');
+    //     // Simpan relasi dengan rak
+    //     $rak->RakSlot()->save($rakslot);
 
-        // Berikan response JSON
-        return response()->json(['message' => 'Rakslot berhasil ditambahkan', 'data' => $rakslot], 201);
-    }
-
-    private function generateNextIdRakslot($idRak)
-    {
-        // Temukan rakslot dengan id_rak yang sama
-        $lastRakslot = Rakslot::where('id_rak', $idRak)->orderByDesc('id_rakslot')->first();
-
-        // Variabel awal
-        $newLetter = 'A';
-        $newNumber = 1;
-
-        if ($lastRakslot) {
-            // Ambil huruf dari id_rakslot terakhir
-            $lastLetter = substr($lastRakslot->id_rakslot, 0, 1);
-
-            // Ambil angka dari id_rakslot terakhir
-            $lastNumber = intval(substr($lastRakslot->id_rakslot, 1));
-
-            // Jika id_rak berbeda, lanjutkan huruf ke alfabet selanjutnya dan reset angka ke 1
-            if ($lastRakslot->id_rak !== $idRak) {
-                $newLetter = chr(ord($lastLetter) + 1);
-                $newNumber = 1;
-            } else {
-                // Jika id_rak sama, lanjutkan angka ke angka selanjutnya
-                $newLetter = $lastLetter;
-                $newNumber = $lastNumber + 1;
-
-                // Jika huruf sudah mencapai 'Z', reset huruf ke 'A' dan reset angka ke 1
-                if ($newLetter > 'Z') {
-                    $newLetter = 'A';
-                    $newNumber = 1;
-                }
-            }
-        } else {
-            // Jika belum ada rakslot untuk id_rak ini, auto-deteksi huruf pertama
-            $previousRakslot = Rakslot::where('id_rak', '!=', $idRak)->orderByDesc('id_rakslot')->first();
-
-            if ($previousRakslot) {
-                $newLetter = chr(ord(substr($previousRakslot->id_rakslot, 0, 1)) + 1);
-            }
-        }
-
-        // Format angka dengan nol di depan (3 digit)
-        $formattedNumber = str_pad($newNumber, 3, '0', STR_PAD_LEFT);
-
-        // Kombinasi id_rakslot baru
-        $nextIdRakslot = $newLetter . $formattedNumber;
-
-        return $nextIdRakslot;
-    }
+    //     // Berikan response JSON
+    //     return response()->json(['message' => 'Rakslot berhasil ditambahkan', 'data' => $rakslot], 201);
+    // }
 
     public function tambahTransaksi(Request $request)
     {

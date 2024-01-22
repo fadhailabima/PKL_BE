@@ -55,4 +55,25 @@ class AdminController extends Controller
 
         return response()->json(['users' => $users]);
     }
+
+    public function deleteUser($id)
+    {
+        // Find user by ID
+        $user = User::find($id);
+
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
+
+        // Delete associated records in the admins table
+        $user->admin()->delete();
+
+        // Delete associated records in the karyawan table
+        $user->karyawan()->delete();
+
+        // Delete the user
+        $user->delete();
+
+        return response()->json(['message' => 'User deleted successfully']);
+    }
 }

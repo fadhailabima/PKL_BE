@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\CreateController;
+use App\Http\Controllers\ProdukController;
 use App\Http\Controllers\RakController;
 use App\Http\Controllers\TransaksiController;
 use Illuminate\Http\Request;
@@ -19,7 +20,6 @@ use Nette\Utils\Image;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
-
 Route::post('/signup', [UserController::class, 'signUp']);
 Route::post('/login', [UserController::class, 'login']);
 Route::post('/tambahproduk', [CreateController::class, 'tambahProduk']);
@@ -35,12 +35,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/getadmin', [AdminController::class, 'getAdmin']);
     Route::get('/getStatistik', [AdminController::class, 'getStatistik']);
     Route::get('/manageUser', [AdminController::class, 'manageUser']);
+    Route::delete('/deleteUser/{id}', [AdminController::class, 'deleteUser']);
     Route::get('/getrak', [RakController::class, 'getAllRaks']);
     Route::get('/getTransaksi', [TransaksiController::class, 'getAllTransaksi']);
+    Route::post('/tambahRakdanSlot', [RakController::class, 'tambahRakDanSlot']);
     Route::get('/getRakbyID/{idrak}', [RakController::class, 'getRakbyID']);
     Route::get('/getRakSlot', [RakController::class, 'getRakSlot']);
     Route::get('/rak/{idrak}/rakslots', [RakController::class, 'getByRakId']);
     Route::post('/updateProfile', [UserController::class, 'updateProfile']);
+    Route::get('/getProduk', [ProdukController::class, 'getProduk']);
+    Route::delete('/deleteProduk/{idproduk}', [ProdukController::class, 'deleteProduk']);
 });
 
 Route::get('/public/storage/photo/{filename}', function ($filename) {
