@@ -80,7 +80,6 @@ class RakController extends Controller
                 $lantai++;
             }
         }
-
         // Berikan response JSON
         return response()->json(['message' => 'Rak dan slot berhasil ditambahkan', 'data' => $rak], 201);
     }
