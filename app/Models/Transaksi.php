@@ -14,21 +14,16 @@ class Transaksi extends Model
     protected $keyType = 'string';
 
     protected $fillable = [
-        'id_rak',
         'id_produk',
-        'id_user',
-        'id_slotrak',
+        'id_karyawan',
         'jumlah',
         'tanggal_transaksi',
         'jenis_transaksi',
+        'tanggal_expired',
+        'kode_produksi',
     ];
 
     protected $guarded = [];
-
-    public function rak()
-    {
-        return $this->belongsTo(Rak::class, 'id_rak', 'idrak');
-    }
 
     public function produk()
     {
@@ -40,8 +35,8 @@ class Transaksi extends Model
         return $this->belongsTo(Karyawan::class, 'id_karyawan', 'idkaryawan');
     }
 
-    public function slotrak()
+    public function transaksiReport()
     {
-        return $this->belongsTo(RakSlot::class, 'id_slotrak', 'id_rakslot');
+        return $this->hasMany(TransaksiReport::class, 'receiptID', 'receiptID');
     }
 }

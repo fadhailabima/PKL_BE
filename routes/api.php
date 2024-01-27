@@ -22,7 +22,6 @@ use Nette\Utils\Image;
 */
 Route::post('/signup', [UserController::class, 'signUp']);
 Route::post('/login', [UserController::class, 'login']);
-Route::post('/tambahproduk', [CreateController::class, 'tambahProduk']);
 Route::post('/tambahrak', [CreateController::class, 'tambahRak']);
 Route::post('/tambahrakslot', [CreateController::class, 'tambahRakslot']);
 Route::middleware('auth:sanctum')->group(function () {
@@ -35,6 +34,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/getadmin', [AdminController::class, 'getAdmin']);
     Route::get('/getStatistik', [AdminController::class, 'getStatistik']);
     Route::get('/manageUser', [AdminController::class, 'manageUser']);
+    Route::post('/changeStatus/{id}', [AdminController::class, 'changeStatus']);
     Route::delete('/deleteUser/{id}', [AdminController::class, 'deleteUser']);
     Route::get('/getrak', [RakController::class, 'getAllRaks']);
     Route::get('/getTransaksi', [TransaksiController::class, 'getAllTransaksi']);
@@ -44,6 +44,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/rak/{idrak}/rakslots', [RakController::class, 'getByRakId']);
     Route::post('/updateProfile', [UserController::class, 'updateProfile']);
     Route::get('/getProduk', [ProdukController::class, 'getProduk']);
+    Route::post('/tambahproduk', [CreateController::class, 'tambahProduk']);
     Route::delete('/deleteProduk/{idproduk}', [ProdukController::class, 'deleteProduk']);
 });
 

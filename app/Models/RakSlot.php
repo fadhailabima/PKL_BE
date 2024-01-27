@@ -15,9 +15,9 @@ class RakSlot extends Model
 
     protected $fillable = [
         'id_rak',
-        'Xcoordinate',
-        'Ycoordinate',
-        'Zcoordinate',
+        'posisi',
+        'lantai',
+        'kapasitas',
         'status'
     ];
 
@@ -28,8 +28,8 @@ class RakSlot extends Model
         return $this->belongsTo(Rak::class, 'id_rak', 'idrak');
     }
 
-    public function transaksi()
+    public function transaksiReport()
     {
-        return $this->hasMany(Transaksi::class, 'id_slotrak', 'id_rakslot');
+        return $this->hasMany(TransaksiReport::class, 'id_rakslot', 'id_rakslot');
     }
 }

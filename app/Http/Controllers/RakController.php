@@ -32,17 +32,6 @@ class RakController extends Controller
 
     public function tambahRakDanSlot(Request $request)
     {
-        // Validasi request menggunakan Laravel Validator
-        $validator = Validator::make($request->all(), [
-            'kapasitas' => 'required|numeric',
-            'status' => 'nullable|in:tersedia,tidak tersedia',
-        ]);
-
-        // Jika validasi gagal, kembalikan response error
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 400);
-        }
-
         // Dapatkan ID rak terbaru
         $latestRak = Rak::orderBy('idrak', 'desc')->first();
 
@@ -58,23 +47,38 @@ class RakController extends Controller
         // Buat objek Rak baru
         $rak = new Rak();
         $rak->idrak = $idRak;
-        $rak->kapasitas = $request->input('kapasitas');
-        $rak->kapasitas_sisa = $request->input('kapasitas');
         $rak->status = $request->input('status') ?? 'tersedia'; // Menggunakan nilai default 'tersedia' jika status tidak diberikan
         // Simpan data ke database
         $rak->save();
 
         // Tambahkan rak slot sesuai kapasitas
-        for ($i = 1; $i <= $rak->kapasitas; $i++) {
+        $lantai = 1; // Inisialisasi variabel lantai
+        for ($i = 1; $i <= 32; $i++) {
+            // Perhitungan untuk posisi kanan atau kiri
+            $posisi = ($i <= 16) ? 'kanan' : 'kiri';
+
+            // Perhitungan untuk lantai
+            if ($i > 16 && $i % 16 === 1) {
+                $lantai = 1; // Reset lantai ke 1 setelah selesai iterasi rakslot kanan
+            }
+
             $nextIdRakslot = $this->generateNextIdRakslot($rak->idrak);
+
             $rakslot = new RakSlot();
             $rakslot->id_rakslot = $nextIdRakslot;
-            $rakslot->Xcoordinate = rand(1, 100); // Isi dengan nilai acak sesuai kebutuhan
-            $rakslot->Ycoordinate = rand(1, 100); // Isi dengan nilai acak sesuai kebutuhan
-            $rakslot->Zcoordinate = rand(1, 100); // Isi dengan nilai acak sesuai kebutuhan
+            $rakslot->id_rak = $rak->idrak;
+            $rakslot->kapasitas = '1';
+            $rakslot->posisi = $posisi;
+            $rakslot->lantai = (string) $lantai;
             $rakslot->status = $request->input('status') ?? 'tersedia';
+
             // Simpan relasi dengan rak
             $rak->RakSlot()->save($rakslot);
+
+            // Increment lantai setiap 4 iterasi
+            if ($i % 4 === 0) {
+                $lantai++;
+            }
         }
 
         // Berikan response JSON

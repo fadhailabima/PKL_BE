@@ -9,7 +9,7 @@ class TransaksiController extends Controller
 {
     public function getAllTransaksi()
     {
-        $transaksis = Transaksi::with('karyawan')->get();
+        $transaksis = Transaksi::with('karyawan', 'produk')->get();
 
         return response()->json(['transaksis' => $transaksis]);
     }

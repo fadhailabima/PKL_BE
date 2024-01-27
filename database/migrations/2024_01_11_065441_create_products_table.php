@@ -16,6 +16,7 @@ return new class extends Migration
         Schema::create('products', function (Blueprint $table) {
             $table->string('idproduk')->primary();
             $table->string('namaproduk');
+            $table->string('value');
             $table->enum('jenisproduk', ['Pupuk Tunggal', 'Pupuk Majemuk', 'Pupuk Soluble', 'Pupuk Organik', 'Pestisida'])->nullable();
             $table->timestamps();
         });

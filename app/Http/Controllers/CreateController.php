@@ -19,6 +19,7 @@ class CreateController extends Controller
         $validator = Validator::make($request->all(), [
             'namaproduk' => 'required|string',
             'jenisproduk' => 'required|in:Pupuk Tunggal,Pupuk Majemuk,Pupuk Soluble,Pupuk Organik,Pestisida',
+            'value' => 'required|string',
         ]);
 
         // Jika validasi gagal, kembalikan response error
@@ -43,96 +44,13 @@ class CreateController extends Controller
         $products->idproduk = $idProduk;
         $products->namaproduk = $request->input('namaproduk');
         $products->jenisproduk = $request->input('jenisproduk');
+        $products->value = $request->input('value');
         // Simpan data ke database
         $products->save();
 
         // Berikan response JSON
         return response()->json(['message' => 'Produk berhasil ditambahkan', 'data' => $products], 201);
     }
-    // public function tambahRak(Request $request)
-    // {
-    //     // Validasi request menggunakan Laravel Validator
-    //     $validator = Validator::make($request->all(), [
-    //         'kapasitas' => 'required|numeric',
-    //         'status' => 'nullable|in:tersedia,tidak tersedia',
-    //     ]);
-
-    //     // Jika validasi gagal, kembalikan response error
-    //     if ($validator->fails()) {
-    //         return response()->json(['errors' => $validator->errors()], 400);
-    //     }
-
-    //     // Dapatkan ID rak terbaru
-    //     $latestRak = Rak::orderBy('idrak', 'desc')->first();
-
-    //     // Mendapatkan angka terakhir dari ID rak terbaru
-    //     $lastNumber = $latestRak ? intval(substr($latestRak->idrak, 1)) : 0;
-
-    //     // Increment angka dan format dengan nol di depan
-    //     $newNumber = str_pad($lastNumber + 1, 3, '0', STR_PAD_LEFT);
-
-    //     // Membuat ID rak baru
-    //     $idRak = 'R' . $newNumber;
-
-    //     // Buat objek Rak baru
-    //     $rak = new Rak();
-    //     $rak->idrak = $idRak;
-    //     $rak->kapasitas = $request->input('kapasitas');
-    //     $rak->kapasitas_sisa = $request->input('kapasitas');
-    //     $rak->status = $request->input('status');
-    //     // Simpan data ke database
-    //     $rak->save();
-
-    //     // Berikan response JSON
-    //     return response()->json(['message' => 'Rak berhasil ditambahkan', 'data' => $rak], 201);
-    // }
-
-    // public function tambahRakslot(Request $request)
-    // {
-    //     // Validasi request menggunakan Laravel Validator
-    //     $validator = Validator::make($request->all(), [
-    //         'id_rak' => 'required',
-    //         'Xcoordinate' => 'required',
-    //         'Ycoordinate' => 'required',
-    //         'Zcoordinate' => 'required',
-    //         'status' => 'nullable|in:tersedia,tidak tersedia',
-    //     ]);
-
-    //     // Jika validasi gagal, kembalikan response error
-    //     if ($validator->fails()) {
-    //         return response()->json(['errors' => $validator->errors()], 400);
-    //     }
-
-    //     // Temukan rak berdasarkan id_rak dari request
-    //     $rak = Rak::find($request->input('id_rak'));
-
-    //     // Jika rak tidak ditemukan, kembalikan response error
-    //     if (!$rak) {
-    //         return response()->json(['errors' => ['id_rak' => 'Rak tidak ditemukan']], 404);
-    //     }
-
-    //     // Periksa apakah kapasitas maksimal rak sudah tercapai
-    //     $kapasitasMaksimal = $rak->kapasitas;
-    //     $jumlahRakslotSaatIni = $rak->RakSlot()->count();
-
-    //     if ($jumlahRakslotSaatIni >= $kapasitasMaksimal) {
-    //         return response()->json(['errors' => ['kapasitas' => 'Kapasitas maksimal rak sudah tercapai']], 400);
-    //     }
-
-    //     // Buat objek Rakslot baru dengan id_rakslot yang di-generate
-    //     $nextIdRakslot = $this->generateNextIdRakslot($request->input('id_rak'));
-    //     $rakslot = new RakSlot();
-    //     $rakslot->id_rakslot = $nextIdRakslot;
-    //     $rakslot->Xcoordinate = $request->input('Xcoordinate');
-    //     $rakslot->Ycoordinate = $request->input('Ycoordinate');
-    //     $rakslot->Zcoordinate = $request->input('Zcoordinate');
-    //     $rakslot->status = $request->input('status');
-    //     // Simpan relasi dengan rak
-    //     $rak->RakSlot()->save($rakslot);
-
-    //     // Berikan response JSON
-    //     return response()->json(['message' => 'Rakslot berhasil ditambahkan', 'data' => $rakslot], 201);
-    // }
 
     public function tambahTransaksi(Request $request)
     {
@@ -140,7 +58,6 @@ class CreateController extends Controller
         $request->validate([
             'nama_produk' => 'required|string',
             'id_rak' => 'required|string',
-            'id_slotrak' => 'required|string',
             'jumlah' => 'required|integer',
             'jenis_transaksi' => 'required|in:masuk,keluar',
         ]);
@@ -162,9 +79,10 @@ class CreateController extends Controller
         // Mendapatkan tanggal sekarang
         $tanggal_transaksi = now()->toDateString();
 
-        // Mencari id_produk berdasarkan nama_produk
+        // Mencari produk berdasarkan nama_produk
         $product = Produk::where('namaproduk', $request->input('nama_produk'))->first();
 
+        // Gantilah bagian pencarian rak dengan menggunakan relasi
         $rak = Rak::find($request->input('id_rak'));
 
         // Cek apakah rak ditemukan
@@ -172,35 +90,29 @@ class CreateController extends Controller
             return response()->json(['error' => 'Rak tidak ditemukan.'], 404);
         }
 
-        if ($request->input('jenis_transaksi') === 'masuk') {
-            $amount = $request->input('jumlah');
+        $nilaiProduk = $product->value;
 
-            // Check if the transaction amount exceeds the remaining capacity of the rack
-            if ($amount > $rak->kapasitas_sisa) {
-                return response()->json(['error' => 'Jumlah transaksi melebihi kapasitas sisa rak.'], 400);
-            }
+        // Cek ketersediaan rakslot
+        $rakslotTersedia = $rak->rakslot()
+            ->where('status', 'tersedia')
+            ->orderBy('id_rakslot') // Sesuaikan dengan urutan yang sesuai
+            ->take($request->input('jumlah') * $nilaiProduk)
+            ->get();
 
-            $rak->kapasitas_sisa -= $amount;
-
-            // Mengupdate status di rakslot menjadi tidak tersedia
-            $this->updateRakslotStatus($request->input('id_slotrak'), 'tidak tersedia');
-        } elseif ($request->input('jenis_transaksi') === 'keluar') {
-            $rak->kapasitas_sisa += $request->input('jumlah');
-            // Mengupdate status di rakslot menjadi tersedia
-            $this->updateRakslotStatus($request->input('id_slotrak'), 'tersedia');
+        if ($rakslotTersedia->count() < $request->input('jumlah') * $nilaiProduk) {
+            return response()->json(['error' => 'Jumlah rakslot yang tersedia tidak mencukupi.'], 400);
         }
 
-        // Cek apakah produk ditemukan
-        if (!$product) {
-            return response()->json(['error' => 'Produk tidak ditemukan.'], 404);
-        }
+        $rakslotIds = $rakslotTersedia->pluck('id_rakslot')->toArray();
+
+        // ...
 
         // Membuat transaksi baru
         $transaction = new Transaksi();
         $transaction->receiptID = $this->generateReceiptID();
         $transaction->id_produk = $product->idproduk;
         $transaction->id_rak = $request->input('id_rak');
-        $transaction->id_slotrak = $request->input('id_slotrak');
+        // $transaction->id_slotrak = $nextRakslotId; // Menggunakan ID rakslot yang baru dibuat
         $transaction->id_karyawan = $karyawan->idkaryawan;
         $transaction->jumlah = $request->input('jumlah');
         $transaction->tanggal_transaksi = $tanggal_transaksi;
@@ -209,23 +121,30 @@ class CreateController extends Controller
         // Simpan transaksi ke database
         $transaction->save();
 
+        $this->updateRakslotProductName($rakslotIds, $request->input('nama_produk'));
 
         // Simpan perubahan kapasitas_sisa ke database
+        $rak->kapasitas_sisa = ($request->input('jenis_transaksi') === 'masuk')
+            ? $rak->kapasitas_sisa - ($request->input('jumlah') * $nilaiProduk)
+            : $rak->kapasitas_sisa + ($request->input('jumlah') * $nilaiProduk);
+
         $rak->save();
 
         // Memberikan respons JSON
         return response()->json(['message' => 'Transaksi berhasil ditambahkan!', 'transaction' => $transaction], 201);
     }
 
-    // Fungsi untuk mengupdate status di rakslot
-    private function updateRakslotStatus($idSlotRak, $status)
+    private function updateRakslotProductName($idSlotRak, $namaProduk)
     {
-        $rakslot = Rakslot::find($idSlotRak);
+        foreach ($idSlotRak as $idRakSlot) {
+            $rakslot = RakSlot::find($idRakSlot);
 
-        // Cek apakah rakslot ditemukan
-        if ($rakslot) {
-            $rakslot->status = $status;
-            $rakslot->save();
+            // Cek apakah rakslot ditemukan dan tersedia
+            if ($rakslot && $rakslot->status == 'tersedia') {
+                $rakslot->nama_produk = $namaProduk;
+                $rakslot->status = 'tidak tersedia';
+                $rakslot->save();
+            }
         }
     }
 

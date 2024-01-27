@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Admin;
+use App\Models\Karyawan;
 use App\Models\Produk;
 use App\Models\Rak;
 use App\Models\Transaksi;
 use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class AdminController extends Controller
@@ -75,5 +77,44 @@ class AdminController extends Controller
         $user->delete();
 
         return response()->json(['message' => 'User deleted successfully']);
+    }
+
+    public function changeStatus($id, Request $request)
+    {
+        // // Create a validator instance
+        // $validator = Validator::make($request->all(), [
+        //     'status' => 'required|in:aktif,non aktif',
+        // ]);
+
+        // // If validation fails, return the errors
+        // if ($validator->fails()) {
+        //     return response()->json($validator->errors(), 400);
+        // }
+
+        // Find the user
+        $user = User::find($id);
+
+        // If user not found, return an error
+        if (!$user) {
+            return response()->json(['error' => 'User tidak ditemukan'], 404);
+        }
+
+
+        // Check the user role and update the status
+        if ($user->level == 'admin') {
+            $admin = Admin::where('user_id', $user->id)->first();
+            if ($admin) {
+                $admin->status = $request->input('status');
+                $admin->save();
+            }
+        } elseif ($user->level == 'karyawan') {
+            $karyawan = Karyawan::where('user_id', $user->id)->first();
+            if ($karyawan) {
+                $karyawan->status = $request->input('status');
+                $karyawan->save();
+            }
+        }
+
+        return response()->json(['message' => 'Status user berhasil diubah'], 200);
     }
 }

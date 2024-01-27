@@ -16,8 +16,6 @@ class Rak extends Model
     protected $keyType = 'string';
 
     protected $fillable = [
-        'kapasitas',
-        'kapasitas_sisa',
         'status'
     ];
 
@@ -29,8 +27,8 @@ class Rak extends Model
         return $this->hasMany(RakSlot::class, 'id_rak', 'idrak');
     }
 
-    public function transaksi()
+    public function transaksiReport()
     {
-        return $this->hasMany(Transaksi::class, 'id_rak', 'idrak');
+        return $this->hasMany(TransaksiReport::class, 'id_rak', 'idrak');
     }
 }

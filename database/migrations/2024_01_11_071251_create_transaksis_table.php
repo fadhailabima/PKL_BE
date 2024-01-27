@@ -16,15 +16,13 @@ return new class extends Migration
         Schema::create('transaksis', function (Blueprint $table) {
             $table->string('receiptID')->primary();
             $table->string('id_produk');
-            $table->string('id_rak');
-            $table->string('id_slotrak');
             $table->string('id_karyawan');
             $table->string('jumlah');
             $table->date('tanggal_transaksi');
+            $table->date('tanggal_expired');
+            $table->string('kode_produksi')->unique();
             $table->enum('jenis_transaksi', ['masuk', 'keluar']);
             $table->foreign('id_produk')->references('idproduk')->on('products')->onDelete('cascade')->onUpdate('cascade');
-            $table->foreign('id_rak')->references('idrak')->on('raks')->onDelete('cascade')->onUpdate('cascade');
-            $table->foreign('id_slotrak')->references('id_rakslot')->on('rakslots')->onDelete('cascade')->onUpdate('cascade');
             $table->foreign('id_karyawan')->references('idkaryawan')->on('karyawans')->onDelete('cascade')->onUpdate('cascade');
             $table->timestamps();
         });
@@ -39,10 +37,8 @@ return new class extends Migration
     {
         Schema::table('transaksis', function (Blueprint $table) {
             $table->dropForeign(['id_produk']);
-            $table->dropForeign(['id_rak']);
-            $table->dropForeign(['id_slotrak']);
             $table->dropForeign(['id_karyawan']);
         });
-        Schema::dropIfExists('rekap');
+        Schema::dropIfExists('transaksis');
     }
 };
