@@ -67,7 +67,7 @@ class RakController extends Controller
             $rakslot = new RakSlot();
             $rakslot->id_rakslot = $nextIdRakslot;
             $rakslot->id_rak = $rak->idrak;
-            $rakslot->kapasitas = '1';
+            $rakslot->kapasitas = '100';
             $rakslot->posisi = $posisi;
             $rakslot->lantai = (string) $lantai;
             $rakslot->status = $request->input('status') ?? 'tersedia';

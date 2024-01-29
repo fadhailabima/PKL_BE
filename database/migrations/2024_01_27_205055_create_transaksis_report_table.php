@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('transaksis_report', function (Blueprint $table) {
+        Schema::create('transaksi_reports', function (Blueprint $table) {
             $table->id();
             $table->string('receiptID');
             $table->string('id_rak');
@@ -34,11 +34,11 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::table('transaksis_report', function (Blueprint $table) {
+        Schema::table('transaksi_reports', function (Blueprint $table) {
+            $table->dropForeign(['receiptID']);
             $table->dropForeign(['id_rak']);
             $table->dropForeign(['id_rakslot']);
-            $table->dropForeign(['receiptID']);
         });
-        Schema::dropIfExists('transaksis_report');
+        Schema::dropIfExists('transaksi_reports');
     }
 };

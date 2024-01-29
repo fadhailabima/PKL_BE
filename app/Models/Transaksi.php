@@ -11,6 +11,7 @@ class Transaksi extends Model
 
     protected $table = 'transaksis';
     protected $primaryKey = 'receiptID';
+    public $incrementing = false;
     protected $keyType = 'string';
 
     protected $fillable = [
@@ -35,7 +36,7 @@ class Transaksi extends Model
         return $this->belongsTo(Karyawan::class, 'id_karyawan', 'idkaryawan');
     }
 
-    public function transaksiReport()
+    public function transaksiReports()
     {
         return $this->hasMany(TransaksiReport::class, 'receiptID', 'receiptID');
     }

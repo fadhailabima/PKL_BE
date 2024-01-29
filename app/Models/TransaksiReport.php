@@ -9,6 +9,10 @@ class TransaksiReport extends Model
 {
     use HasFactory;
 
+    protected $primaryKey = 'id';
+
+    protected $table = 'transaksi_reports';
+
     protected $fillable = [
         'receiptID',
         'id_rakslot',

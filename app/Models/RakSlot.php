@@ -28,7 +28,7 @@ class RakSlot extends Model
         return $this->belongsTo(Rak::class, 'id_rak', 'idrak');
     }
 
-    public function transaksiReport()
+    public function transaksiReports()
     {
         return $this->hasMany(TransaksiReport::class, 'id_rakslot', 'id_rakslot');
     }
