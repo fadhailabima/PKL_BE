@@ -18,6 +18,8 @@ class TransaksiReport extends Model
         'id_rakslot',
         'id_rak',
         'jumlah',
+        'nama_produk',
+        'tanggal_transaksi',
         'jenis_transaksi',
     ];
 

@@ -19,8 +19,8 @@ return new class extends Migration
             $table->string('id_karyawan');
             $table->string('jumlah');
             $table->date('tanggal_transaksi');
-            $table->date('tanggal_expired');
-            $table->string('kode_produksi')->unique();
+            $table->date('tanggal_expired')->nullable();
+            $table->string('kode_produksi')->unique()->nullable();
             $table->enum('jenis_transaksi', ['masuk', 'keluar']);
             $table->foreign('id_produk')->references('idproduk')->on('products')->onDelete('cascade')->onUpdate('cascade');
             $table->foreign('id_karyawan')->references('idkaryawan')->on('karyawans')->onDelete('cascade')->onUpdate('cascade');

@@ -30,6 +30,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
     Route::post('/logout', [UserController::class, 'logout']);
     Route::post('/tambahtransaksi', [CreateController::class, 'tambahTransaksi']);
+    Route::post('/transaksiKeluar', [CreateController::class, 'transaksiKeluar']);
     // admin page
     Route::get('/getadmin', [AdminController::class, 'getAdmin']);
     Route::get('/getStatistik', [AdminController::class, 'getStatistik']);
