@@ -16,7 +16,8 @@ return new class extends Migration
         Schema::create('rakslots', function (Blueprint $table) {
             $table->string('id_rakslot')->primary();
             $table->string('id_rak');
-            $table->string('kapasitas');
+            $table->string('kapasitas_maksimal');
+            $table->string('kapasitas_terpakai');
             $table->enum('posisi', ['kanan', 'kiri'])->nullable();
             $table->enum('lantai', ['1', '2', '3', '4'])->nullable();
             $table->enum('status', ['tersedia', 'tidak tersedia'])->nullable();

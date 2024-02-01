@@ -67,7 +67,11 @@ class RakController extends Controller
             $rakslot = new RakSlot();
             $rakslot->id_rakslot = $nextIdRakslot;
             $rakslot->id_rak = $rak->idrak;
-            $rakslot->kapasitas = '100';
+
+            // Ambil nilai kapasitas_maksimal dari request atau default ke 300 jika tidak ada
+            $rakslot->kapasitas_maksimal = $request->input('kapasitas_maksimal');
+
+            $rakslot->kapasitas_terpakai = '0';
             $rakslot->posisi = $posisi;
             $rakslot->lantai = (string) $lantai;
             $rakslot->status = $request->input('status') ?? 'tersedia';
