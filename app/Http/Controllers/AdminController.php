@@ -81,15 +81,6 @@ class AdminController extends Controller
 
     public function changeStatus($id, Request $request)
     {
-        // // Create a validator instance
-        // $validator = Validator::make($request->all(), [
-        //     'status' => 'required|in:aktif,non aktif',
-        // ]);
-
-        // // If validation fails, return the errors
-        // if ($validator->fails()) {
-        //     return response()->json($validator->errors(), 400);
-        // }
 
         // Find the user
         $user = User::find($id);

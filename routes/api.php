@@ -1,14 +1,13 @@
 <?php
 
 use App\Http\Controllers\AdminController;
-use App\Http\Controllers\CreateController;
 use App\Http\Controllers\ProdukController;
 use App\Http\Controllers\RakController;
 use App\Http\Controllers\TransaksiController;
+use App\Http\Controllers\KaryawanController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
-use Nette\Utils\Image;
 
 /*
 |--------------------------------------------------------------------------
@@ -20,17 +19,16 @@ use Nette\Utils\Image;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
-Route::post('/signup', [UserController::class, 'signUp']);
 Route::post('/login', [UserController::class, 'login']);
-Route::post('/tambahrak', [CreateController::class, 'tambahRak']);
-Route::post('/tambahrakslot', [CreateController::class, 'tambahRakslot']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
     Route::post('/logout', [UserController::class, 'logout']);
-    Route::post('/tambahtransaksi', [CreateController::class, 'tambahTransaksi']);
-    Route::post('/transaksiKeluar', [CreateController::class, 'transaksiKeluar']);
+    Route::post('/signup', [UserController::class, 'signUp']);
+    Route::post('/tambahtransaksi', [TransaksiController::class, 'tambahTransaksi']);
+    Route::post('/transaksiKeluar', [TransaksiController::class, 'transaksiKeluar']);
+    Route::get('/getDetailTransaksi/{receiptID}', [TransaksiController::class, 'getDetailTransaksi']);
     // admin page
     Route::get('/getadmin', [AdminController::class, 'getAdmin']);
     Route::get('/getStatistik', [AdminController::class, 'getStatistik']);
@@ -45,8 +43,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/rak/{idrak}/rakslots', [RakController::class, 'getByRakId']);
     Route::post('/updateProfile', [UserController::class, 'updateProfile']);
     Route::get('/getProduk', [ProdukController::class, 'getProduk']);
-    Route::post('/tambahproduk', [CreateController::class, 'tambahProduk']);
+    Route::post('/tambahproduk', [ProdukController::class, 'tambahProduk']);
     Route::delete('/deleteProduk/{idproduk}', [ProdukController::class, 'deleteProduk']);
+    //karyawan page
+    Route::get('/getKaryawan', [KaryawanController::class, 'getKaryawan']);
+    Route::get('/getTransaksibyKaryawan', [TransaksiController::class, 'getTransaksibyKaryawan']);
 });
 
 Route::get('/public/storage/photo/{filename}', function ($filename) {
