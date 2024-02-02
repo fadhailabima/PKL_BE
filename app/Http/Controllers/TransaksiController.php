@@ -25,17 +25,6 @@ class TransaksiController extends Controller
     public function tambahTransaksi(Request $request)
     {
         // Validasi input dari formulir
-        $request->validate([
-            'nama_produk' => 'required|string',
-            'jumlah' => 'required|integer',
-            'tanggal_expired' => 'required|date',
-            'kode_produksi' => 'required|string',
-            'jenis_transaksi' => 'required|in:masuk,keluar'
-        ]);
-
-        if ($request->input('jenis_transaksi') !== 'masuk') {
-            return response()->json(['error' => 'Jenis transaksi harus "masuk".'], 400);
-        }
 
         // Mendapatkan id_karyawan dari pengguna yang sedang login
         $user_id = Auth::id();
@@ -82,7 +71,7 @@ class TransaksiController extends Controller
         $transaction->tanggal_expired = $request->input('tanggal_expired');
         $transaction->kode_produksi = $request->input('kode_produksi');
         $transaction->tanggal_transaksi = $tanggal_transaksi;
-        $transaction->jenis_transaksi = $request->input('jenis_transaksi');
+        $transaction->jenis_transaksi = 'masuk';
 
         // Simpan transaksi ke database
         $transaction->save();
@@ -237,7 +226,7 @@ class TransaksiController extends Controller
         $transaction->id_karyawan = $karyawan->idkaryawan;
         $transaction->jumlah = $request->input('jumlah');
         $transaction->tanggal_transaksi = $tanggal_transaksi;
-        $transaction->jenis_transaksi = $request->input('jenis_transaksi');
+        $transaction->jenis_transaksi = 'keluar';
         $transaction->save();
 
         if (!Transaksi::where('receiptID', $transaction->receiptID)->exists()) {
@@ -401,6 +390,28 @@ class TransaksiController extends Controller
         }
     }
 
+    public function deleteTransaksi($receiptID)
+    {
+        // Cari transaksi berdasarkan ID
+        $transaksi = Transaksi::with('transaksiReports.rakSlot')->find($receiptID);
+
+        if (!$transaksi) {
+            return response()->json(['message' => 'Transaksi not found'], 404);
+        }
+
+        // Mengembalikan kapasitas_terpakai di RakSlot
+        foreach ($transaksi->transaksiReports as $report) {
+            $report->rakSlot->kapasitas_terpakai -= $report->jumlah;
+            $report->rakSlot->save();
+            $report->delete();
+        }
+
+        // Hapus transaksi
+        $transaksi->delete();
+
+        return response()->json(['message' => 'Transaksi and related reports deleted successfully']);
+    }
+
     public function getTransaksibyKaryawan()
     {
         // Mendapatkan karyawan yang sedang login
@@ -415,10 +426,17 @@ class TransaksiController extends Controller
 
         // Mengambil data transaksi berdasarkan ID karyawan
         $transaksi = Transaksi::where('id_karyawan', $karyawan->idkaryawan)
-        ->with('produk')
-        ->get();
+            ->with('produk')
+            ->get();
 
         // Memberikan respons JSON dengan data transaksi
         return response()->json(['transaksi' => $transaksi], 200);
+    }
+
+    public function getAllTransaksiReport()
+    {
+        $transaksi = Transaksi::with('produk')->where('jenis_transaksi', 'masuk')->get();
+
+        return response()->json(['transaksiReport' => $transaksi]);
     }
 }

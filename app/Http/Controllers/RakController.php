@@ -136,4 +136,19 @@ class RakController extends Controller
 
         return $nextIdRakslot;
     }
+    public function changeStatusRak(Request $request, $idrak)
+    {
+
+        $rak = Rak::find($idrak);
+
+        if (!$rak) {
+            return response()->json(['error' => 'Rak not found.'], 404);
+        }
+
+        $rak->status = $request->status;
+        $rak->save();
+
+        return response()->json(['success' => 'Rak status updated successfully.']);
+    }
+
 }

@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+
 
 class UserController extends Controller
 {
@@ -105,65 +105,6 @@ class UserController extends Controller
             return response()->json(['message' => 'Logout berhasil']);
         } else {
             return response()->json(['error' => 'Unauthorized'], 401);
-        }
-    }
-
-    public function updateProfile(Request $request)
-    {
-        try {
-            $validator = Validator::make($request->all(), [
-                'alamat' => 'nullable|string',
-                'email' => 'nullable|max:255|email',
-                'handphone' => 'nullable|string|regex:/^[0-9]+$/|between:10,12',
-                'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:3048',
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json(['success' => false, 'message' => $validator->errors()], 422);
-            }
-
-            $user_id = Auth::id();
-
-            // Mencari data admin berdasarkan user_id
-            $admin = Admin::where('user_id', $user_id)->firstOrFail();
-
-            // Update profile fields
-            $dataToUpdate = [];
-
-            if ($request->input('alamat')) {
-                $dataToUpdate['alamat'] = $request->input('alamat');
-            }
-
-            if ($request->input('email')) {
-                $dataToUpdate['email'] = $request->input('email');
-            }
-
-            if ($request->input('handphone')) {
-                $dataToUpdate['handphone'] = $request->input('handphone');
-            }
-
-            $admin->update($dataToUpdate);
-
-            // Handle photo update
-            if ($request->hasFile('foto') && $request->file('foto')->isValid()) {
-                // Delete old photo if exists
-                if ($admin->foto) {
-                    Storage::delete('public/photo/' . $admin->foto);
-                }
-
-                // Save new photo
-                $file = $request->file('foto');
-                $fileName = uniqid() . '.' . $file->getClientOriginalExtension();
-                $file->storeAs('public/photo/', $fileName);
-                $admin->foto = $fileName;
-            }
-
-            $admin->save();
-
-            return response()->json(['success' => true, 'message' => 'Data berhasil diperbarui', 'admin' => $admin, 'inputs' => $request->all()]);
-        } catch (\Exception $e) {
-
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
 }
