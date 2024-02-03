@@ -45,6 +45,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/rak/{idrak}/rakslots', [RakController::class, 'getByRakId']);
     Route::post('/updateProfile', [AdminController::class, 'updateProfile']);
     Route::get('/getProduk', [ProdukController::class, 'getProduk']);
+    Route::post('/tambahJenisProduk', [ProdukController::class, 'tambahJenisProduk']);
     Route::post('/tambahproduk', [ProdukController::class, 'tambahProduk']);
     Route::delete('/deleteProduk/{idproduk}', [ProdukController::class, 'deleteProduk']);
     //karyawan page

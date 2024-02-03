@@ -18,6 +18,7 @@ class Produk extends Model
         'namaproduk',
         'jenisproduk',
         'value',
+        'idjenisproduk'
     ];
 
     protected $guarded = [];
@@ -25,5 +26,10 @@ class Produk extends Model
     public function transaksi()
     {
         return $this->hasMany(Transaksi::class, 'id_produk', 'idproduk');
+    }
+
+    public function jenisProduk()
+    {
+        return $this->belongsTo(JenisProduk::class, 'idjenisproduk', 'id');
     }
 }

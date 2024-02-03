@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\JenisProduk;
 use App\Models\Produk;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -10,8 +11,8 @@ class ProdukController extends Controller
 {
     public function getProduk()
     {
-        // Get all data from the "raks" table
-        $produks = Produk::all();
+        // Get all data from the "produks" table along with their "jenis_produk"
+        $produks = Produk::with('jenisProduk')->get();
 
         // Return a JSON response with the retrieved data
         return response()->json(['produk' => $produks]);
@@ -37,8 +38,8 @@ class ProdukController extends Controller
         // Validasi request menggunakan Laravel Validator
         $validator = Validator::make($request->all(), [
             'namaproduk' => 'required|string',
-            'jenisproduk' => 'required|in:Pupuk Tunggal,Pupuk Majemuk,Pupuk Soluble,Pupuk Organik,Pestisida',
             'value' => 'required|string',
+            'jenisproduk' => 'required|string'
         ]);
 
         // Jika validasi gagal, kembalikan response error
@@ -58,16 +59,36 @@ class ProdukController extends Controller
         // Membuat ID produk baru
         $idProduk = 'P' . $newNumber;
 
+        $jenisproduk = JenisProduk::where('jenisproduk', $request->input('jenisproduk'))->first();
+
         // Buat objek Produk baru
         $products = new Produk();
         $products->idproduk = $idProduk;
         $products->namaproduk = $request->input('namaproduk');
-        $products->jenisproduk = $request->input('jenisproduk');
         $products->value = $request->input('value');
+        $products->idjenisproduk = $jenisproduk->id;
         // Simpan data ke database
         $products->save();
 
         // Berikan response JSON
         return response()->json(['message' => 'Produk berhasil ditambahkan', 'data' => $products], 201);
+    }
+
+    public function tambahJenisProduk(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'jenisproduk' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 400);
+        }
+
+        $jenisProduk = new JenisProduk();
+        $jenisProduk->jenisproduk = $request->input('jenisproduk');
+        $jenisProduk->save();
+
+        return response()->json(['message'=> 'Jenis produk berhasil ditambahkan', 'data' => $jenisProduk], 201);
+        
     }
 }
