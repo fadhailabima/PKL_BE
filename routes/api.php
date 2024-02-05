@@ -46,7 +46,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/updateProfile', [AdminController::class, 'updateProfile']);
     Route::get('/getProduk', [ProdukController::class, 'getProduk']);
     Route::post('/tambahJenisProduk', [ProdukController::class, 'tambahJenisProduk']);
+    Route::get('/getJenisProduk', [ProdukController::class, 'getJenisProduk']);
     Route::post('/tambahproduk', [ProdukController::class, 'tambahProduk']);
+    Route::delete('/deleteJenisProduk/{id}', [ProdukController::class, 'deleteJenisProduk']);
     Route::delete('/deleteProduk/{idproduk}', [ProdukController::class, 'deleteProduk']);
     //karyawan page
     Route::get('/getKaryawan', [KaryawanController::class, 'getKaryawan']);

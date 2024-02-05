@@ -91,4 +91,27 @@ class ProdukController extends Controller
         return response()->json(['message'=> 'Jenis produk berhasil ditambahkan', 'data' => $jenisProduk], 201);
         
     }
+
+    public function getJenisProduk()
+    {
+        $jenisProduk = JenisProduk::all();
+
+        return response()->json(['jenisproduk' => $jenisProduk]);
+    }
+
+    public function deleteJenisProduk($id)
+    {
+        // Cari produk berdasarkan ID
+        $jenisproduk = JenisProduk::find($id);
+
+        if (!$jenisproduk) {
+            return response()->json(['message' => 'Produk not found'], 404);
+        }
+
+        // Hapus jenisproduk$jenisproduk
+        $jenisproduk->delete();
+
+        return response()->json(['message' => 'Produk deleted successfully']);
+    }
+
 }

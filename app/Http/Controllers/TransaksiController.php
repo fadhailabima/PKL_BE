@@ -434,7 +434,11 @@ class TransaksiController extends Controller
 
         // Mengembalikan kapasitas_terpakai di RakSlot
         foreach ($transaksi->transaksiReports as $report) {
-            $report->rakSlot->kapasitas_terpakai -= $report->jumlah;
+            if ($transaksi->jenis_transaksi == 'keluar') {
+                $report->rakSlot->kapasitas_terpakai += $report->jumlah;
+            } else {
+                $report->rakSlot->kapasitas_terpakai -= $report->jumlah;
+            }
             $report->rakSlot->save();
             $report->delete();
         }
@@ -470,8 +474,8 @@ class TransaksiController extends Controller
     {
         $transaksi = Transaksi::join('products', 'transaksis.id_produk', '=', 'products.idproduk')
             ->where('transaksis.jenis_transaksi', 'masuk')
-            ->select('transaksis.id_produk')
-            ->distinct('transaksis.id_produk')
+            ->select('products.namaproduk') // Select namaproduk from products table
+            ->distinct()
             ->get();
 
         return response()->json(['transaksiReport' => $transaksi]);
