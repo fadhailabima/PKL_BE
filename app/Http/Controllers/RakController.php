@@ -47,7 +47,7 @@ class RakController extends Controller
         // Buat objek Rak baru
         $rak = new Rak();
         $rak->idrak = $idRak;
-        $rak->status = $request->input('status') ?? 'tersedia'; // Menggunakan nilai default 'tersedia' jika status tidak diberikan
+        $rak->status = $request->input('status') ?? 'Tersedia'; // Menggunakan nilai default 'tersedia' jika status tidak diberikan
         // Simpan data ke database
         $rak->save();
 
@@ -55,7 +55,7 @@ class RakController extends Controller
         $lantai = 1; // Inisialisasi variabel lantai
         for ($i = 1; $i <= 32; $i++) {
             // Perhitungan untuk posisi kanan atau kiri
-            $posisi = ($i <= 16) ? 'kanan' : 'kiri';
+            $posisi = ($i <= 16) ? 'Kanan' : 'Kiri';
 
             // Perhitungan untuk lantai
             if ($i > 16 && $i % 16 === 1) {
@@ -74,7 +74,7 @@ class RakController extends Controller
             $rakslot->kapasitas_terpakai = '0';
             $rakslot->posisi = $posisi;
             $rakslot->lantai = (string) $lantai;
-            $rakslot->status = $request->input('status') ?? 'tersedia';
+            $rakslot->status = $request->input('status') ?? 'Tersedia';
 
             // Simpan relasi dengan rak
             $rak->RakSlot()->save($rakslot);
@@ -150,5 +150,4 @@ class RakController extends Controller
 
         return response()->json(['success' => 'Rak status updated successfully.']);
     }
-
 }

@@ -77,10 +77,20 @@ class UserController extends Controller
             'password' => 'required',
         ]);
 
-        $user = User::where('username', $loginData['username'])->first();
+        $user = User::where('username', $loginData['username'])
+                     ->with(['admin' => function ($query) {
+                         $query->where('status', 'Aktif');
+                     }, 'karyawan' => function ($query) {
+                         $query->where('status', 'Aktif');
+                     }])
+                     ->first();
 
         if (!$user || !Hash::check($loginData['password'], $user->password)) {
             return $this->unautheticatedResponse('Kombinasi username dan password tidak valid.');
+        }
+
+        if (!$user->admin && !$user->karyawan) {
+            return $this->unautheticatedResponse('Akun tidak aktif.');
         }
 
         $token = $user->createToken('authToken')->plainTextToken;

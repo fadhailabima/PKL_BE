@@ -18,9 +18,9 @@ return new class extends Migration
             $table->string('id_rak');
             $table->string('kapasitas_maksimal');
             $table->string('kapasitas_terpakai');
-            $table->enum('posisi', ['kanan', 'kiri'])->nullable();
+            $table->enum('posisi', ['Kanan', 'Kiri'])->nullable();
             $table->enum('lantai', ['1', '2', '3', '4'])->nullable();
-            $table->enum('status', ['tersedia', 'tidak tersedia'])->nullable();
+            $table->enum('status', ['Tersedia', 'Tidak Tersedia'])->nullable();
             $table->foreign('id_rak')->references('idrak')->on('raks')->onDelete('cascade')->onUpdate('cascade');
             $table->timestamps();
         });

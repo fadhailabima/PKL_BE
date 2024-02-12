@@ -18,7 +18,6 @@ return new class extends Migration
             $table->string('namaproduk');
             $table->string('value');
             $table->unsignedBigInteger('idjenisproduk');
-            $table->enum('jenisproduk', ['Pupuk Tunggal', 'Pupuk Majemuk', 'Pupuk Soluble', 'Pupuk Organik', 'Pestisida'])->nullable();
             $table->foreign('idjenisproduk')->references('id')->on('jenis_produks')->onDelete('cascade')->onUpdate('cascade');
             $table->timestamps();
         });

@@ -23,7 +23,7 @@ class KaryawanController extends Controller
 
         // Pastikan admin ditemukan
         if (!$karyawan) {
-            return response()->json(['error' => 'Admin tidak ditemukan.'], 404);
+            return response()->json(['error' => 'Karyawan tidak ditemukan.'], 404);
         }
 
         // Memberikan respons JSON dengan data karyawan

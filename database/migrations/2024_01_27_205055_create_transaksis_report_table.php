@@ -21,7 +21,8 @@ return new class extends Migration
             $table->string('jumlah');
             $table->string('nama_produk');
             $table->date('expired_date')->nullable();
-            $table->enum('jenis_transaksi', ['masuk', 'keluar']);
+            $table->string('kode_produksi')->nullable();
+            $table->enum('jenis_transaksi', ['Masuk', 'Keluar']);
             $table->foreign('receiptID')->references('receiptID')->on('transaksis')->onDelete('cascade')->onUpdate('cascade');
             $table->foreign('id_rak')->references('idrak')->on('raks')->onDelete('cascade')->onUpdate('cascade');
             $table->foreign('id_rakslot')->references('id_rakslot')->on('rakslots')->onDelete('cascade')->onUpdate('cascade');

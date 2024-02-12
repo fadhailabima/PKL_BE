@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('alamat')->nullable();
             $table->string('email')->nullable();
             $table->string('handphone')->nullable();
-            $table->enum('status', ['Aktif', 'NON AKTIF'])->default('Aktif');
+            $table->enum('status', ['Aktif', 'Non Aktif'])->default('Aktif');
             $table->string('foto')->nullable();
             $table->unsignedBigInteger('user_id');
             $table->foreign('user_id')->references('id')->on('users');

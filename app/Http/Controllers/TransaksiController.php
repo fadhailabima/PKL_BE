@@ -10,6 +10,7 @@ use App\Models\Transaksi;
 use App\Models\TransaksiReport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
@@ -25,6 +26,13 @@ class TransaksiController extends Controller
     public function tambahTransaksi(Request $request)
     {
         // Validasi input dari formulir
+        $validator = Validator::make($request->all(), [
+            'kode_produksi' => 'required|unique:transaksis',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 400);
+        }
 
         // Mendapatkan id_karyawan dari pengguna yang sedang login
         $user_id = Auth::id();
@@ -71,7 +79,7 @@ class TransaksiController extends Controller
         $transaction->tanggal_expired = $request->input('tanggal_expired');
         $transaction->kode_produksi = $request->input('kode_produksi');
         $transaction->tanggal_transaksi = $tanggal_transaksi;
-        $transaction->jenis_transaksi = 'masuk';
+        $transaction->jenis_transaksi = 'Masuk';
 
         // Simpan transaksi ke database
         $transaction->save();
@@ -90,22 +98,20 @@ class TransaksiController extends Controller
                 return response()->json(['error' => 'Transaksi tidak ditemukan.'], 404);
             }
 
-            $rak = Rak::where('status', 'tersedia')->first();
+            $rak = Rak::where('status', 'Tersedia')->first();
 
             $nilaiProduk = $product->value;
+            $jumlah_transaksi_asli = $request->input('jumlah');
+            $jumlah_transaksi = $jumlah_transaksi_asli * $nilaiProduk;
 
             // Pastikan rak tersedia sebelum melanjutkan
             if ($rak) {
-                $jumlah_transaksi = $request->input('jumlah') * $nilaiProduk;
-
                 // Loop sampai semua jumlah transaksi terpenuhi
                 while ($jumlah_transaksi > 0) {
-                    // Dapatkan rakslot yang tersedia pada rak yang dipilih
-                    $rakslot = RakSlot::where('id_rak', $rak->idrak)
-                        ->where('status', 'tersedia')
-                        ->first();
+                    // Cari rakslot yang kapasitas_terpakai-nya 0 pada rak yang dipilih
+                    $rakslot = RakSlot::where('id_rak', $rak->idrak)->where('kapasitas_terpakai', 0)->first();
 
-                    // Pastikan rakslot tersedia sebelum melanjutkan
+                    // Jika tidak ada rakslot yang tersedia, maka kembalikan error JSON
                     if (!$rakslot) {
                         return response()->json(['error' => 'Tidak ada rakslot yang tersedia pada rak yang dipilih.'], 404);
                     }
@@ -118,8 +124,9 @@ class TransaksiController extends Controller
                     $transaksi_report->receiptID = $transaction->receiptID; // Pastikan receiptID valid
                     $transaksi_report->id_rak = $rak->idrak; // Pastikan id_rak valid
                     $transaksi_report->id_rakslot = $rakslot->id_rakslot; // Pastikan id_rakslot valid
-                    $transaksi_report->jumlah = $jumlah_transaksi_rakslot;
+                    $transaksi_report->jumlah = round($jumlah_transaksi_rakslot / $nilaiProduk); // Gunakan jumlah asli yang tidak dikalikan dengan nilai produk
                     $transaksi_report->expired_date = $transaction->tanggal_expired;
+                    $transaksi_report->kode_produksi = $transaction->kode_produksi;
                     $transaksi_report->nama_produk = $transaction->id_produk;
                     $transaksi_report->jenis_transaksi = $transaction->jenis_transaksi;
 
@@ -134,7 +141,7 @@ class TransaksiController extends Controller
                     $rakslot->kapasitas_terpakai = min($rakslot->kapasitas_terpakai, $rakslot->kapasitas_maksimal);
 
                     if ($rakslot->kapasitas_terpakai >= $rakslot->kapasitas_maksimal) {
-                        $rakslot->status = 'tidak tersedia';
+                        $rakslot->status = 'Tidak Tersedia';
                     }
 
                     $rakslot->save();
@@ -142,12 +149,12 @@ class TransaksiController extends Controller
                     // Jika masih ada transaksi dan kapasitas_terpakai sudah mencapai kapasitas_maksimal, pindah ke rakslot berikutnya
                     if ($jumlah_transaksi > 0 && $rakslot->kapasitas_terpakai >= $rakslot->kapasitas_maksimal) {
                         // Update status rakslot menjadi tidak tersedia
-                        $rakslot->status = 'tidak tersedia';
+                        $rakslot->status = 'Tidak Tersedia';
                         $rakslot->save();
 
                         // Cari rakslot selanjutnya pada rak yang sama
                         $nextRakSlot = RakSlot::where('id_rak', $rak->idrak)
-                            ->where('status', 'tersedia')
+                            ->where('status', 'Tersedia')
                             ->where('id_rakslot', '>', $rakslot->id_rakslot)
                             ->first();
 
@@ -158,6 +165,9 @@ class TransaksiController extends Controller
                         // Gunakan rakslot pada rak yang sama
                         $rakslot = $nextRakSlot;
                     }
+
+                    $transaction = Transaksi::with(['transaksiReports', 'transaksiReports.rak', 'transaksiReports.rakSlot', 'produk', 'karyawan'])
+                        ->findOrFail($transaction->receiptID);
                 }
 
                 // Memberikan respons JSON
@@ -220,7 +230,17 @@ class TransaksiController extends Controller
         $transaction->id_karyawan = $karyawan->idkaryawan;
         $transaction->jumlah = $request->input('jumlah');
         $transaction->tanggal_transaksi = $tanggal_transaksi;
-        $transaction->jenis_transaksi = 'keluar';
+        $transaksi_IN = TransaksiReport::where('nama_produk', $transaction->id_produk)
+            ->where('jenis_transaksi', 'Masuk')
+            ->select('expired_date', 'kode_produksi')
+            ->first();
+        if ($transaksi_IN) {
+            $transaction->tanggal_expired = $transaksi_IN->expired_date;
+            $transaction->kode_produksi = $transaksi_IN->kode_produksi;
+        } else {
+            return response()->json(['error' => 'No matching TransaksiReport found.'], 404);
+        }
+        $transaction->jenis_transaksi = 'Keluar';
         $transaction->save();
 
         if (!Transaksi::where('receiptID', $transaction->receiptID)->exists()) {
@@ -235,13 +255,14 @@ class TransaksiController extends Controller
                 return response()->json(['error' => 'Transaksi tidak ditemukan.'], 404);
             }
 
-            $rak = Rak::where('status', 'tersedia')->first();
+            $rak = Rak::where('status', 'Tersedia')->first();
 
             $nilaiProduk = $product->value;
+            $jumlah_transaksi_asli = $request->input('jumlah');
+            $jumlah_transaksi = $jumlah_transaksi_asli * $nilaiProduk;
 
             // Pastikan rak tersedia sebelum melanjutkan
             if ($rak) {
-                $jumlah_transaksi = $request->input('jumlah') * $nilaiProduk;
 
                 // Ambil semua rakslot yang memiliki produk yang ingin dikeluarkan
                 $rakslotReport = TransaksiReport::where('nama_produk', $transaction->id_produk)
@@ -251,9 +272,9 @@ class TransaksiController extends Controller
                             // ->where('kapasitas_terpakai', '>', 0);
                         }
                     ])
-                    ->where('jenis_transaksi', 'masuk')
+                    ->where('jenis_transaksi', 'Masuk')
                     ->orderBy('expired_date', 'asc')
-                    ->select('id_rak', 'id_rakslot')
+                    ->select('id_rak', 'id_rakslot', 'expired_date', 'kode_produksi')
                     ->get();
 
                 // get the first rakSlotReport->rak_slot->kapasitas_terpakai > 0
@@ -281,10 +302,12 @@ class TransaksiController extends Controller
                     $transaksi_report_keluar->receiptID = $transaction->receiptID;
                     $transaksi_report_keluar->id_rak = $rakslotReport->id_rak;
                     $transaksi_report_keluar->id_rakslot = $rakslotReport->id_rakslot;
+                    $transaksi_report_keluar->expired_date = $rakslotReport->expired_date;
+                    $transaksi_report_keluar->kode_produksi = $rakslotReport->kode_produksi;
                     // Hitung jumlah transaksi yang dapat dimasukkan ke dalam rakslot saat ini
                     $jumlah_transaksi_terpakai = min($jumlah_transaksi, $rakslot->kapasitas_terpakai);
 
-                    $transaksi_report_keluar->jumlah = -$jumlah_transaksi_terpakai; // Jumlah negatif karena transaksi keluar
+                    $transaksi_report_keluar->jumlah = round(-$jumlah_transaksi_terpakai / $nilaiProduk); // Jumlah negatif karena transaksi keluar
                     $transaksi_report_keluar->jenis_transaksi = $transaction->jenis_transaksi;
                     // $transaksi_report_keluar->tanggal_transaksi = $transaction->tanggal_transaksi;
                     $transaksi_report_keluar->nama_produk = $transaction->id_produk;
@@ -304,7 +327,7 @@ class TransaksiController extends Controller
                     $rakslotToUpdate->kapasitas_terpakai = max($rakslotToUpdate->kapasitas_terpakai, 0);
 
                     if ($rakslotToUpdate->kapasitas_terpakai < $rakslotToUpdate->kapasitas_maksimal) {
-                        $rakslotToUpdate->status = 'tersedia';
+                        $rakslotToUpdate->status = 'Tersedia';
                     }
 
                     $rakslotToUpdate->save();
@@ -320,7 +343,7 @@ class TransaksiController extends Controller
 
                             // Cari rakslot selanjutnya yang memiliki barang tersebut
                             $rakslot_lain = TransaksiReport::where('nama_produk', $transaction->id_produk)
-                                ->where('jenis_transaksi', 'masuk')
+                                ->where('jenis_transaksi', 'Masuk')
                                 ->where('id_rakslot', '>', $current_rakslot_id) // Hanya pertimbangkan rakslot dengan id lebih besar
                                 ->with([
                                     'rakSlot' => function ($query) {
@@ -360,7 +383,7 @@ class TransaksiController extends Controller
                             // $jumlah_transaksi_rakslot_lain = min($transaction->jumlah, $rakslot_lain_model->kapasitas_terpakai);
                             $jumlah_transaksi_sekarang = min($jumlah_transaksi, $rakslot_lain_model->kapasitas_terpakai);
 
-                            $transaksi_report_keluar_lain->jumlah = -$jumlah_transaksi_sekarang;
+                            $transaksi_report_keluar_lain->jumlah = round(-$jumlah_transaksi_sekarang / $nilaiProduk);
                             $transaksi_report_keluar_lain->jenis_transaksi = $transaction->jenis_transaksi;
                             // $transaksi_report_keluar_lain->tanggal_transaksi = $transaction->tanggal_transaksi;
                             $transaksi_report_keluar_lain->nama_produk = $transaction->id_produk;
@@ -373,7 +396,7 @@ class TransaksiController extends Controller
                             $rakslot_lain_model->kapasitas_terpakai = max($rakslot_lain_model->kapasitas_terpakai, 0);
 
                             if ($rakslot_lain_model->kapasitas_terpakai < $rakslot_lain_model->kapasitas_maksimal) {
-                                $rakslot_lain_model->status = 'tersedia';
+                                $rakslot_lain_model->status = 'Tersedia';
                             }
 
                             $rakslot_lain_model->save();
@@ -384,9 +407,8 @@ class TransaksiController extends Controller
                             echo $e->getMessage();
                         }
                     }
-
-                    // return response()->json(['success' => ''], 200);
-                    // Memberikan respons JSON
+                    $transaction = Transaksi::with(['transaksiReports', 'transaksiReports.rak', 'transaksiReports.rakSlot', 'produk', 'karyawan'])
+                        ->findOrFail($transaction->receiptID);
                     return response()->json(['message' => 'Transaksi berhasil ditambahkan!', 'transaction' => $transaction], 201);
                 } else {
                     return response()->json(['error' => 'Tidak ada rakslot yang tersedia.'], 404);
@@ -473,7 +495,7 @@ class TransaksiController extends Controller
     public function getAllTransaksiReport()
     {
         $transaksi = Transaksi::join('products', 'transaksis.id_produk', '=', 'products.idproduk')
-            ->where('transaksis.jenis_transaksi', 'masuk')
+            ->where('transaksis.jenis_transaksi', 'Masuk')
             ->select('products.namaproduk') // Select namaproduk from products table
             ->distinct()
             ->get();

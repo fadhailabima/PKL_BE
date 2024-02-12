@@ -15,7 +15,7 @@ return new class extends Migration
     {
         Schema::create('raks', function (Blueprint $table) {
             $table->string('idrak')->primary();
-            $table->enum('status', ['tersedia', 'tidak tersedia'])->nullable();
+            $table->enum('status', ['Tersedia', 'Tidak Tersedia'])->nullable();
             $table->timestamps();
         });
     }

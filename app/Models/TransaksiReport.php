@@ -21,6 +21,8 @@ class TransaksiReport extends Model
         'nama_produk',
         'tanggal_transaksi',
         'jenis_transaksi',
+        'expired_date',
+        'kode_produksi',
     ];
 
     protected $guarded = [];

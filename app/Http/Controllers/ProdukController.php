@@ -105,13 +105,13 @@ class ProdukController extends Controller
         $jenisproduk = JenisProduk::find($id);
 
         if (!$jenisproduk) {
-            return response()->json(['message' => 'Produk not found'], 404);
+            return response()->json(['message' => 'Jenis Produk not found'], 404);
         }
 
         // Hapus jenisproduk$jenisproduk
         $jenisproduk->delete();
 
-        return response()->json(['message' => 'Produk deleted successfully']);
+        return response()->json(['message' => 'Jenis Produk deleted successfully']);
     }
 
 }
