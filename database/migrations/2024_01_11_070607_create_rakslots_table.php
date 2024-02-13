@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('kapasitas_maksimal');
             $table->string('kapasitas_terpakai');
             $table->enum('posisi', ['Kanan', 'Kiri'])->nullable();
-            $table->enum('lantai', ['1', '2', '3', '4'])->nullable();
+            $table->enum('lantai', ['0','1', '2', '3', '4'])->nullable();
             $table->enum('status', ['Tersedia', 'Tidak Tersedia'])->nullable();
             $table->foreign('id_rak')->references('idrak')->on('raks')->onDelete('cascade')->onUpdate('cascade');
             $table->timestamps();

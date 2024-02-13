@@ -109,7 +109,20 @@ class TransaksiController extends Controller
                 // Loop sampai semua jumlah transaksi terpenuhi
                 while ($jumlah_transaksi > 0) {
                     // Cari rakslot yang kapasitas_terpakai-nya 0 pada rak yang dipilih
-                    $rakslot = RakSlot::where('id_rak', $rak->idrak)->where('kapasitas_terpakai', 0)->first();
+                    $rakslot = RakSlot::where('id_rak', $rak->idrak)
+                        ->where('lantai', '!=', '0')
+                        ->where('kapasitas_terpakai', 0)
+                        // ->orderBy('lantai', 'asc')
+                        ->first();
+
+                    if (!$rakslot) {
+                        $rakslot = RakSlot::where('id_rak', $rak->idrak)
+                            ->where('kapasitas_terpakai', 0)
+                            ->where('lantai', '0')
+                            ->first();
+                    }
+
+                    // Jika tidak ada rakslot di lantai lain, cari di lantai 0
 
                     // Jika tidak ada rakslot yang tersedia, maka kembalikan error JSON
                     if (!$rakslot) {
@@ -156,7 +169,32 @@ class TransaksiController extends Controller
                         $nextRakSlot = RakSlot::where('id_rak', $rak->idrak)
                             ->where('status', 'Tersedia')
                             ->where('id_rakslot', '>', $rakslot->id_rakslot)
+                            ->where('lantai', '!=', '0')
                             ->first();
+
+                        if (!$nextRakSlot) {
+                            $nextRakSlot = RakSlot::where('id_rak', $rak->idrak)
+                                ->where('status', 'Tersedia')
+                                ->where('id_rakslot', '>', $rakslot->id_rakslot)
+                                ->where('lantai', '0')
+                                ->first();
+                        }
+
+                        if (!$nextRakSlot) {
+                            // Cari rakslot selanjutnya pada rak lain
+                            $nextRakSlot = RakSlot::where('status', 'Tersedia')
+                                ->where('id_rak', '>', $rak->idrak)
+                                ->where('lantai', '!=', '0')
+                                ->first();
+                        }
+
+                        if (!$nextRakSlot) {
+                            // Cari rakslot selanjutnya pada rak lain
+                            $nextRakSlot = RakSlot::where('status', 'Tersedia')
+                                ->where('id_rak', '>', $rak->idrak)
+                                ->where('lantai', '0')
+                                ->first();
+                        }
 
                         if (!$nextRakSlot) {
                             return response()->json(['error' => 'Tidak ada rakslot yang tersedia pada rak yang dipilih.'], 404);
@@ -268,8 +306,7 @@ class TransaksiController extends Controller
                 $rakslotReport = TransaksiReport::where('nama_produk', $transaction->id_produk)
                     ->with([
                         'rakSlot' => function ($query) {
-                            $query->select('id_rakslot', 'kapasitas_terpakai');
-                            // ->where('kapasitas_terpakai', '>', 0);
+                            $query->select('id_rakslot', 'kapasitas_terpakai', 'kapasitas_maksimal');
                         }
                     ])
                     ->where('jenis_transaksi', 'Masuk')
@@ -278,9 +315,18 @@ class TransaksiController extends Controller
                     ->get();
 
                 // get the first rakSlotReport->rak_slot->kapasitas_terpakai > 0
-                $rakslotReport = $rakslotReport->first(function ($value, $key) {
-                    return $value->rakSlot->kapasitas_terpakai > 0;
+
+                $originalRakslotReport = $rakslotReport;
+
+                $rakslotReport = $originalRakslotReport->sortBy('expired_date')->first(function ($value, $key) {
+                    return $value->rakSlot->kapasitas_terpakai < $value->rakSlot->kapasitas_maksimal;
                 });
+
+                if (!$rakslotReport) {
+                    $rakslotReport = $originalRakslotReport->sortBy('expired_date')->first(function ($value, $key) {
+                        return $value->rakSlot->kapasitas_terpakai > 0;
+                    });
+                }
 
                 if (!$rakslotReport || !$rakslotReport->id_rak || !$rakslotReport->id_rakslot) {
                     return response()->json(['error' => 'Tidak ada rakslot yang tersedia.'], 404);
@@ -352,10 +398,12 @@ class TransaksiController extends Controller
                                     }
                                 ])
                                 ->orderBy('expired_date', 'asc') // Urutkan berdasarkan id_rakslot
-                                ->select('id_rak', 'id_rakslot') // Sertakan kapasitas_terpakai
+                                ->select('id_rak', 'id_rakslot', 'expired_date', 'kode_produksi') // Sertakan kapasitas_terpakai
                                 ->get();
 
-                            $rakslot_lain = $rakslot_lain->first(function ($value, $key) {
+                            $originalRakslotLain = $rakslot_lain;
+
+                            $rakslot_lain = $originalRakslotLain->sortBy('expired_date')->first(function ($value, $key) {
                                 return $value->rakSlot->kapasitas_terpakai > 0;
                             });
 
@@ -385,6 +433,8 @@ class TransaksiController extends Controller
 
                             $transaksi_report_keluar_lain->jumlah = round(-$jumlah_transaksi_sekarang / $nilaiProduk);
                             $transaksi_report_keluar_lain->jenis_transaksi = $transaction->jenis_transaksi;
+                            $transaksi_report_keluar_lain->expired_date = $rakslot_lain->expired_date;
+                            $transaksi_report_keluar_lain->kode_produksi = $rakslot_lain->kode_produksi;
                             // $transaksi_report_keluar_lain->tanggal_transaksi = $transaction->tanggal_transaksi;
                             $transaksi_report_keluar_lain->nama_produk = $transaction->id_produk;
                             $transaksi_report_keluar_lain->save();

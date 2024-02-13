@@ -52,17 +52,17 @@ class RakController extends Controller
         $rak->save();
 
         // Tambahkan rak slot sesuai kapasitas
-        $lantai = 1; // Inisialisasi variabel lantai
-        for ($i = 1; $i <= 32; $i++) {
+        $lantai = 0; // Inisialisasi variabel lantai
+        for ($i = 1; $i <= 40; $i++) {
             // Perhitungan untuk posisi kanan atau kiri
-            $posisi = ($i <= 16) ? 'Kanan' : 'Kiri';
+            $posisi = ($i <= 20) ? 'Kanan' : 'Kiri';
 
             // Perhitungan untuk lantai
-            if ($i > 16 && $i % 16 === 1) {
-                $lantai = 1; // Reset lantai ke 1 setelah selesai iterasi rakslot kanan
+            if ($i > 20 && $i % 20 === 1) {
+                $lantai = 0; // Reset lantai ke 1 setelah selesai iterasi rakslot kanan
             }
 
-            $nextIdRakslot = $this->generateNextIdRakslot($rak->idrak);
+            $nextIdRakslot = $this->generateNextIdRakslot($rak->idrak, $lantai);
 
             $rakslot = new RakSlot();
             $rakslot->id_rakslot = $nextIdRakslot;
@@ -74,7 +74,7 @@ class RakController extends Controller
             $rakslot->kapasitas_terpakai = '0';
             $rakslot->posisi = $posisi;
             $rakslot->lantai = (string) $lantai;
-            $rakslot->status = $request->input('status') ?? 'Tersedia';
+            $rakslot->status = $request->input('status') ?? 'tersedia';
 
             // Simpan relasi dengan rak
             $rak->RakSlot()->save($rakslot);
@@ -88,7 +88,7 @@ class RakController extends Controller
         return response()->json(['message' => 'Rak dan slot berhasil ditambahkan', 'data' => $rak], 201);
     }
 
-    private function generateNextIdRakslot($idRak)
+    private function generateNextIdRakslot($idRak, $lantai)
     {
         // Temukan rakslot dengan id_rak yang sama
         $lastRakslot = Rakslot::where('id_rak', $idRak)->orderByDesc('id_rakslot')->first();
@@ -99,10 +99,10 @@ class RakController extends Controller
 
         if ($lastRakslot) {
             // Ambil huruf dari id_rakslot terakhir
-            $lastLetter = substr($lastRakslot->id_rakslot, 0, 1);
+            $lastLetter = substr($lastRakslot->id_rakslot, -4, 1);
 
             // Ambil angka dari id_rakslot terakhir
-            $lastNumber = intval(substr($lastRakslot->id_rakslot, 1));
+            $lastNumber = intval(substr($lastRakslot->id_rakslot, -3));
 
             // Jika id_rak berbeda, lanjutkan huruf ke alfabet selanjutnya dan reset angka ke 1
             if ($lastRakslot->id_rak !== $idRak) {
@@ -119,13 +119,11 @@ class RakController extends Controller
                     $newNumber = 1;
                 }
             }
-        } else {
-            // Jika belum ada rakslot untuk id_rak ini, auto-deteksi huruf pertama
-            $previousRakslot = Rakslot::where('id_rak', '!=', $idRak)->orderByDesc('id_rakslot')->first();
+        }
 
-            if ($previousRakslot) {
-                $newLetter = chr(ord(substr($previousRakslot->id_rakslot, 0, 1)) + 1);
-            }
+        // Jika lantai adalah '0', tambahkan 'XX' ke newLetter
+        if ($lantai == '0') {
+            $newLetter = 'XX' . $newLetter;
         }
 
         // Format angka dengan nol di depan (3 digit)
@@ -133,6 +131,13 @@ class RakController extends Controller
 
         // Kombinasi id_rakslot baru
         $nextIdRakslot = $newLetter . $formattedNumber;
+
+        while (Rakslot::where('id_rakslot', $nextIdRakslot)->exists()) {
+            // If it does, increment the number and generate a new id_rakslot
+            $newNumber++;
+            $formattedNumber = str_pad($newNumber, 3, '0', STR_PAD_LEFT);
+            $nextIdRakslot = $newLetter . $formattedNumber;
+        }
 
         return $nextIdRakslot;
     }
