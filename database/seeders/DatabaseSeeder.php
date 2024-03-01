@@ -20,7 +20,7 @@ class DatabaseSeeder extends Seeder
     {
         // \App\Models\User::factory(10)->create();
         $adminUser = User::create([
-            'username' => '23456',
+            'username' => '12345',
             'password' => Hash::make('saprotan'), // replace 'password' with the real password
             'level' => 'admin',
         ]);
@@ -32,16 +32,16 @@ class DatabaseSeeder extends Seeder
         ]);
 
         // Create karyawan user
-        $karyawanUser = User::create([
-            'username' => '12345',
-            'password' => Hash::make('saprotan'), // replace 'password' with the real password
-            'level' => 'karyawan',
-        ]);
+        // $karyawanUser = User::create([
+        //     'username' => '12345',
+        //     'password' => Hash::make('saprotan'), // replace 'password' with the real password
+        //     'level' => 'karyawan',
+        // ]);
 
-        Karyawan::create([
-            'idkaryawan' => $karyawanUser->username,
-            'nama' => 'Fadhail A Bima', // replace with the real name
-            'user_id' => $karyawanUser->id,
-        ]);
+        // Karyawan::create([
+        //     'idkaryawan' => $karyawanUser->username,
+        //     'nama' => 'Fadhail A Bima', // replace with the real name
+        //     'user_id' => $karyawanUser->id,
+        // ]);
     }
 }

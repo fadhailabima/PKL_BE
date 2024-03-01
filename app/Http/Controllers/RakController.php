@@ -90,8 +90,8 @@ class RakController extends Controller
 
     private function generateNextIdRakslot($idRak, $lantai)
     {
-        // Temukan rakslot dengan id_rak yang sama
-        $lastRakslot = Rakslot::where('id_rak', $idRak)->orderByDesc('id_rakslot')->first();
+        // Temukan rakslot terakhir secara keseluruhan
+        $lastRakslot = Rakslot::orderByDesc('id_rakslot')->first();
 
         // Variabel awal
         $newLetter = 'A';
@@ -101,29 +101,31 @@ class RakController extends Controller
             // Ambil huruf dari id_rakslot terakhir
             $lastLetter = substr($lastRakslot->id_rakslot, -4, 1);
 
-            // Ambil angka dari id_rakslot terakhir
-            $lastNumber = intval(substr($lastRakslot->id_rakslot, -3));
-
-            // Jika id_rak berbeda, lanjutkan huruf ke alfabet selanjutnya dan reset angka ke 1
-            if ($lastRakslot->id_rak !== $idRak) {
+            // Jika id_rak berbeda dari id_rak rakslot terakhir, lanjutkan huruf ke huruf selanjutnya
+            if ($idRak != $lastRakslot->id_rak) {
                 $newLetter = chr(ord($lastLetter) + 1);
-                $newNumber = 1;
             } else {
-                // Jika id_rak sama, lanjutkan angka ke angka selanjutnya
                 $newLetter = $lastLetter;
-                $newNumber = $lastNumber + 1;
+            }
 
-                // Jika huruf sudah mencapai 'Z', reset huruf ke 'A' dan reset angka ke 1
-                if ($newLetter > 'Z') {
-                    $newLetter = 'A';
-                    $newNumber = 1;
-                }
+            // Jika lantai sama dengan lantai rakslot terakhir dan id_rak sama, lanjutkan angka ke angka selanjutnya
+            if ($lantai == $lastRakslot->lantai && $idRak == $lastRakslot->id_rak) {
+                // Ambil angka dari id_rakslot terakhir
+                $lastNumber = intval(substr($lastRakslot->id_rakslot, -3));
+                $newNumber = $lastNumber + 1;
+            }
+
+            // Jika huruf sudah mencapai 'Z', reset huruf ke 'A' dan reset angka ke 1
+            if ($newLetter > 'Z') {
+                $newLetter = 'A';
+                $newNumber = 1;
             }
         }
 
-        // Jika lantai adalah '0', tambahkan 'XX' ke newLetter
+        // Jika lantai adalah '0', tambahkan 'XX' ke newLetter dan reset angka ke 1
         if ($lantai == '0') {
             $newLetter = 'XX' . $newLetter;
+            $newNumber = 1;
         }
 
         // Format angka dengan nol di depan (3 digit)
