@@ -113,5 +113,4 @@ class ProdukController extends Controller
 
         return response()->json(['message' => 'Jenis Produk deleted successfully']);
     }
-
 }
